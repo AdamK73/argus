@@ -2,119 +2,140 @@
 
 Magento 2 frontend GraphQL debug CLI. The hundred-eyed watcher.
 
-A terminal-resident diagnostic console for Magento 2 frontend GraphQL — interactive TUI plus a non-interactive `blitz` subcommand. Built on Ink 5, undici, zero filesystem persistence of secrets, and an outbound allow-list.
+In four keystrokes after admin auth, surface a customer's full frontend commerce state — addresses, phone numbers, cart, totals, payment, shipping — in a clean terminal UI. No browser, no Postman.
+
+Default endpoint baked in: **`https://gymbeam.sk/graphql`**.
+
+---
 
 ## Install
 
-Requires Node.js ≥ 20. Installs two binaries: `argus` (long form) and `ag` (short alias).
+Requires Node 20+. Pick the line that matches your situation, paste it, done.
 
-The package is **not published to the public npm registry**. Pick whichever distribution route fits.
-
-### From a tarball (zero infrastructure)
-
-The maintainer runs `npm pack` and ships you `argus-cli-0.1.0.tgz`. You install it directly:
+### Option A — install from the tarball URL (recommended)
 
 ```sh
-npm install -g ./argus-cli-0.1.0.tgz
-argus --version
+npm install -g https://github.com/AdamK73/argus/raw/main/argus-cli-0.1.0.tgz
 ```
 
-To upgrade, replace the tarball and re-run the same command. To remove: `npm uninstall -g argus-cli`.
+Skips the git clone, skips devDependencies, just downloads ~17 KB and symlinks the binary.
 
-### From GitHub
-
-Once the repo is pushed:
+### Option B — install from the git repo
 
 ```sh
-npm install -g git+https://github.com/<owner>/argus.git
+npm install -g --omit=dev github:AdamK73/argus
 ```
 
-Re-run the same command to pull updates. For private repos you need an SSH key or a PAT in the URL.
+The `--omit=dev` is important — without it npm tries to install build tooling (`tsup`, `vitest`) and may fail on machines that don't have a clean Node toolchain.
 
-### From source
+### Verify
 
 ```sh
-git clone <repo-url> argus
-cd argus
-npm install
-npm run build
-npm link             # creates argus / ag symlinks
+argus --version            # → 0.1.0
+ag --version               # short alias
 ```
 
-`npm unlink -g argus-cli` removes them.
-
-## Quick start
+### Uninstall
 
 ```sh
-argus                                       # interactive TUI
-argus --endpoint https://shop.example/graphql
-ARGUS_ADMIN_KEY=xxx argus blitz user@example.com default
+npm uninstall -g argus-cli
 ```
 
-Your admin API key is **never** stored in config. It's prompted interactively (TUI) or read from `ARGUS_ADMIN_KEY` (non-interactive).
+---
 
-## Configuration
-
-Optional `~/.argusrc.json`:
-
-```json
-{
-  "endpoint": "https://shop.example.com/graphql",
-  "defaultStoreCode": "default",
-  "timeoutMs": 10000
-}
-```
-
-Resolution cascade for the endpoint: `--endpoint` flag → `ARGUS_ENDPOINT` env → config file → interactive prompt.
-
-The config schema is strict — unknown keys (like tokens or admin keys) are rejected on load.
-
-## Modes
-
-### Blitzkrieg
-Surface a customer's full frontend commerce state in four keystrokes after admin auth.
-- prompts: email + store code
-- acquires customer token via `generateCustomerTokenAsAdmin`
-- fans out three parallel queries: customer + addresses, cart summary, cart detail
-- renders three panels with badges, tables, totals
-- aggregates phone numbers across all addresses, flags ones that look invalid
-- live request log (operation · status · ms) shown during fetch; toggle on results with `l`
-
-Footer actions on results:
-
-```
-r refresh    c cart-id    t token    l log    j dump    b back    q quit
-```
-
-`t` copies the live customer token to the clipboard for use elsewhere — straight from the session, never written to disk.
-
-### Reserved (planned)
-Cart Forge · Schema Diff · Mutation Lab · Cache Inspector · Order Probe · Wishlist Probe · Catalog Probe.
-
-## Non-interactive
+## Run
 
 ```sh
-ARGUS_ADMIN_KEY=… argus blitz <email> <store-code>
+argus
 ```
 
-- admin key is read from env only — refused on argv
-- emits a single sanitised JSON object on stdout
-- exit codes: `0` full success · `2` partial · `3` token failure · `4` admin auth failure · `1` other
+That's it. The endpoint defaults to gymbeam.sk, so you'll go straight to the admin-key prompt. From there:
+
+1. paste your admin API token (input is masked)
+2. press `↵` to validate
+3. select **Blitzkrieg** from the menu
+4. type the customer's email, press `↵`
+5. accept the default store code (just press `↵`) or type one
+
+You'll see the customer's data, addresses, phone numbers, full cart, totals, and a live log of every GraphQL call.
+
+---
+
+## Keys on the results view
+
+| key | action |
+|---|---|
+| `r` | refresh — re-run the snapshot |
+| `c` | copy cart-id to clipboard |
+| `t` | copy customer token to clipboard |
+| `l` | toggle the request log |
+| `j` | dump sanitised JSON to `./argus-snapshots/` |
+| `b` | back to menu |
+| `q` | quit |
+
+Tokens and admin keys are scrubbed from `j` dumps — only what's safe to share lands on disk.
+
+---
+
+## Override the endpoint
+
+Resolution order (first hit wins):
+
+1. `argus --endpoint https://other.tld/graphql` — per-invocation
+2. `ARGUS_ENDPOINT=https://other.tld/graphql argus` — per-shell
+3. `~/.argusrc.json`:
+   ```json
+   { "endpoint": "https://other.tld/graphql", "defaultStoreCode": "uk", "timeoutMs": 10000 }
+   ```
+4. **built-in default — gymbeam.sk** (you don't need any of the above for the common case)
+
+The rc file's schema is strict: unknown keys (admin tokens, secrets) are refused.
+
+---
+
+## Non-interactive (scripts, CI)
+
+```sh
+ARGUS_ADMIN_KEY=xxxxx argus blitz user@example.com default
+```
+
+Emits one sanitised JSON line on stdout. Exit codes:
+
+| code | meaning |
+|---|---|
+| `0` | full success |
+| `2` | partial — at least one panel errored |
+| `3` | customer token acquisition failed |
+| `4` | admin auth failed |
+| `1` | anything else |
+
+`ARGUS_ADMIN_KEY` is read from env only — argv is refused so it never lands in shell history or process listings.
+
+---
+
+## Update
+
+```sh
+npm install -g https://github.com/AdamK73/argus/raw/main/argus-cli-0.1.0.tgz
+```
+
+Same one-liner. npm replaces the existing install.
+
+---
 
 ## Security
 
-1. Admin key entered via masked input; never logged, written, or re-rendered.
-2. Customer token is mode-scoped and cleared on mode exit.
-3. All snapshot dumps run through a redactor — admin keys, customer tokens, and any field matching `token | authorization | password | secret | api_key | bearer` are replaced with `«redacted»`.
-4. Outbound network egress is restricted to the configured endpoint host via an undici dispatcher allow-list — verified by unit test.
-5. No telemetry, no analytics, no update checks, no remote schema fetch.
-6. On `SIGINT` / `SIGTERM` / clean exit, secret references are zeroized.
+- Admin key never written to disk, log, or scrollback. Masked on input.
+- Customer token is session-scoped and zeroized on mode exit / `SIGINT` / `SIGTERM`.
+- Snapshot dumps run through a redactor — keys, tokens, and any `token | authorization | password | secret | api_key | bearer` field are replaced with `«redacted»`.
+- Outbound network egress restricted to the configured endpoint host via an `undici` allow-list dispatcher (verified by unit test).
+- No telemetry, no analytics, no remote schema fetch, no update check.
 
-## Magento prerequisites
+---
 
-`generateCustomerTokenAsAdmin` is a B2B / EE-era mutation; if your storefront does not expose it natively, install the matching module before relying on the Blitzkrieg flow.
+## For maintainers
 
-## Development
+### Develop
 
 ```sh
 npm install
@@ -125,17 +146,24 @@ npm run build
 node dist/cli.js
 ```
 
-Layout follows the PRD — operations under `src/graphql/operations/` are the only places GraphQL strings exist; everything else imports them.
+GraphQL operation strings live only in `src/graphql/operations/*` and are imported elsewhere — never inlined.
 
-### Cutting a release for distribution
+### Cut a release for users
 
 ```sh
-npm version patch          # or minor / major — bumps package.json
-npm run build
-npm pack                   # → argus-cli-<version>.tgz
+npm version patch         # bumps package.json
+npm run build             # refresh dist/
+npm pack                  # → argus-cli-<version>.tgz
+git add dist argus-cli-*.tgz package.json
+git commit -m "release vX.Y.Z"
+git push
 ```
 
-Hand the resulting `.tgz` off (Slack, AirDrop, email). Recipients install with `npm install -g <tarball>`.
+Both `dist/` and the latest tarball are committed on `main` so the install URLs in this README keep working without any release infrastructure.
+
+If you bump the version number in `package.json`, rename the tarball references in the install commands above to match — or just keep the filename versionless if you'd rather not edit the README on every bump.
+
+---
 
 ## License
 
