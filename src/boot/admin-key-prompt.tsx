@@ -107,7 +107,9 @@ export function AdminKeyPrompt({ initialEndpoint, onReady }: AdminKeyPromptProps
           {stage.error ? (
             <Text color={palette.error}>{stage.error}</Text>
           ) : (
-            <Text color={palette.dim}>example  https://shop.example.com/graphql</Text>
+            <Text color={palette.dim}>
+              full url to your /graphql endpoint    e.g. https://yourshop.tld/graphql
+            </Text>
           )}
         </Box>
       </Box>

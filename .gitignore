@@ -1,6 +1,9 @@
 node_modules
-dist
 .argusrc.json
 argus-snapshots
 *.log
 .DS_Store
+
+# dist/ is committed so `npm install -g github:AdamK73/argus`
+# works without a build step on the consumer's machine.
+

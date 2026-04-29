@@ -13,8 +13,13 @@ const ConfigSchema = z
   .strict();
 
 export type ResolvedEndpoint =
-  | { source: "flag" | "env" | "file"; url: string; config: ArgusConfig }
+  | { source: "flag" | "env" | "file" | "builtin"; url: string; config: ArgusConfig }
   | { source: "missing"; url: null; config: ArgusConfig };
+
+// Built-in default for the most common deployment — overridden by any of the
+// higher-priority sources below. Set to null in a fork that should always
+// require explicit configuration.
+export const BUILTIN_ENDPOINT: string | null = "https://gymbeam.sk/graphql";
 
 export function readConfigFile(path = join(homedir(), ".argusrc.json")): ArgusConfig {
   if (!existsSync(path)) return {};
@@ -39,6 +44,9 @@ export function resolveEndpoint(opts: { flag?: string }): ResolvedEndpoint {
   }
   if (config.endpoint) {
     return { source: "file", url: config.endpoint, config };
+  }
+  if (BUILTIN_ENDPOINT) {
+    return { source: "builtin", url: BUILTIN_ENDPOINT, config };
   }
   return { source: "missing", url: null, config };
 }

@@ -21,7 +21,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "tsup"
+    "prepublishOnly": "tsup"
   },
   "dependencies": {
     "ink": "^5.2.1",
