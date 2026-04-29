@@ -1,0 +1,51 @@
+{
+  "name": "argus-cli",
+  "version": "0.1.0",
+  "description": "Magento 2 frontend GraphQL debug CLI. The hundred-eyed watcher.",
+  "type": "module",
+  "bin": {
+    "argus": "dist/cli.js",
+    "ag": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "ink": "^5.2.1",
+    "ink-select-input": "^6.2.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1",
+    "undici": "^7.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "magento",
+    "magento2",
+    "graphql",
+    "cli",
+    "tui",
+    "debug",
+    "ink"
+  ],
+  "license": "MIT"
+}
